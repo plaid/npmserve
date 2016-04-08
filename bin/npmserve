@@ -1,0 +1,128 @@
+#!/bin/bash -e
+
+#
+# Runs the npmserve client.
+#
+
+EXIT_SUCCESS=0
+EXIT_RUNTIME_ERROR=1
+EXIT_USAGE_ERROR=2
+EXIT_SERVER_DOWN=3
+
+cmd="$@";
+
+function usage() {
+  echo "usage: NPMSERVE_ORIGIN=<url> npmserve [ install | info | remove | cache clean ]";
+  exit $EXIT_USAGE_ERROR;
+}
+
+function print_build_hash() {
+  build_hash=$(curl -s -X POST $NPMSERVE_ORIGIN/npm/hash -d packageJson="$(cat package.json)")
+  echo 'build hash:' $build_hash
+}
+
+function test_server_up() {
+  curl -s -X GET $NPMSERVE_ORIGIN -o /dev/null || {
+    echo "npmserve origin '$NPMSERVE_ORIGIN' is down or not available"
+    exit $EXIT_SERVER_DOWN
+  }
+}
+
+function delete_node_modules() {
+  if [ -d node_modules ]; then
+    echo 'deleting local node_modules'
+    rm -rf node_modules/*
+  fi
+}
+
+function npm_install() {
+  start=$(date +%s)
+  if [ ! -d node_modules ]; then
+    mkdir node_modules
+  fi
+
+  print_build_hash
+
+  echo 'requesting build from server (this may take a while) ...'
+  curl -s -X POST $NPMSERVE_ORIGIN/npm/install \
+    -H 'content-type: application/x-www-form-urlencoded; charset=utf-8' \
+    -d packageJson="$(cat package.json)" \
+    -o node_modules.tar.gz;
+
+  echo 'testing file integrity'
+  if ! gunzip -t node_modules.tar.gz; then
+    echo 'server encountered an error'
+    echo $(cat node_modules.tar.gz)
+    echo 'INSTALL FAILED'
+    exit $EXIT_RUNTIME_ERROR
+  fi
+
+  delete_node_modules
+
+  echo 'extracting node_modules archive'
+  tar -xmzf node_modules.tar.gz \
+    -C node_modules \
+    --strip-components=1
+  rm node_modules.tar.gz
+
+  end=$(date +%s)
+  elapsed=$((end - start))
+
+  echo "build took $elapsed sec"
+  echo 'INSTALL SUCCESSFUL'
+  exit $EXIT_SUCCESS
+}
+
+function npm_remove() {
+  print_build_hash
+  echo 'deleting build on server'
+  server_response=$(curl -s -X DELETE $NPMSERVE_ORIGIN/npm/install/$build_hash)
+  echo "> '$server_response'"
+  delete_node_modules
+  echo 'BUILD DELETED'
+  exit $EXIT_SUCCESS
+}
+
+function npm_cache_clean() {
+  echo 'clearing server npm cache'
+  server_response=$(curl -s -X POST $NPMSERVE_ORIGIN/npm/cache/clean)
+  echo "> '$server_response'"
+  echo 'SERVER CACHE CLEARED'
+  exit $EXIT_SUCCESS
+}
+
+function npmserve_info() {
+  echo 'npmserve origin:' $NPMSERVE_ORIGIN
+  print_build_hash
+}
+
+# script
+# ======
+
+if [ $# -le 0 ]; then
+  usage
+fi
+
+if [ -z "$NPMSERVE_ORIGIN" ]; then
+  usage
+fi
+
+test_server_up
+
+case "$cmd" in
+  'install' )
+    npm_install
+  ;;
+  'remove' )
+    npm_remove
+  ;;
+  'cache clean' )
+    npm_cache_clean
+  ;;
+  'info' )
+    npmserve_info
+  ;;
+  * )
+    usage
+  ;;
+esac

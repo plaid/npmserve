@@ -1,0 +1,17 @@
+{
+  "name": "npmserve",
+  "version": "0.0.0",
+  "author": "Ryan Buckheit <ryan@plaid.com>",
+  "bin": {
+    "npmserve": "./bin/npmserve"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/plaid/npmserve.git"
+  },
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {
+    "xyz": "0.5.0"
+  }
+}
