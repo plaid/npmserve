@@ -7,6 +7,15 @@ release-major release-minor release-patch:
 	@$(XYZ) --increment $(@:release-%=%)
 
 
+.PHONY: lint
+lint:
+
+
 .PHONY: setup
 setup:
 	$(NPM) install
+
+
+.PHONY: test
+test:
+
