@@ -1,0 +1,12 @@
+dependencies:
+  override:
+    - make setup
+
+machine:
+  node:
+    version: 0.12.7
+
+test:
+  override:
+    - make lint
+    - make test
