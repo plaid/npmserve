@@ -1,6 +1,6 @@
 # npmserve
 
-A replacement for `npm` which allows clients to execute `npm install` on a remote server.
+A replacement for `npm`, which allows clients to execute `npm install` on a remote server.
 This allows slow clients to offload the work of building `node_modules` and perform significantly faster installs.
 
 ## server
@@ -19,7 +19,7 @@ store, delete, and retrieve builds.
 
 ## limitations
 
-1. Presently the server must be run on a machine of the same architecture as the clients. If this is not the case, calls to `/npm/install` may return `node_modules` archives containing extensions compiled for the wrong architecture to the client.
+Currently, the server must be run on a machine with the same architecture as the clients. If this is not the case, calls to `/npm/install` may return `node_modules` archives that contain extensions compiled for the wrong architecture.
 
 ## installation
 
@@ -27,14 +27,14 @@ store, delete, and retrieve builds.
 npm install -g npmserve
 ```
 
-For convenience, you may want to configure the `NPMSERVE_ORIGIN`
-environment varaible in your `.profile` or `.bashrc`:
+For convenience, you might want to configure the `NPMSERVE_ORIGIN`
+environment variable in your `.profile` or `.bashrc`:
 
 ```
 export NPMSERVE_ORIGIN=<your_server_url>
 ```
 
-This will allow you to execute the commands as shown below without having to
+This will allow you to execute the commands as shown below, without having to
 specify the `NPMSERVE_ORIGIN` on each command.
 
 ## usage
