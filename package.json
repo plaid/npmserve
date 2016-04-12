@@ -1,6 +1,7 @@
 {
   "name": "npmserve",
   "version": "0.0.0",
+  "license": "MIT",
   "author": "Ryan Buckheit <ryan@plaid.com>",
   "bin": {
     "npmserve": "./bin/npmserve"
