@@ -1,5 +1,7 @@
 # npmserve
 
+[![npm](https://img.shields.io/npm/v/npmserve.svg?maxAge=2592000)]()
+
 A replacement for `npm`, which allows clients to execute `npm install` on a remote server.
 This allows slow clients to offload the work of building `node_modules` and perform significantly faster installs.
 
