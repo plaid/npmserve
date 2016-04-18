@@ -5,27 +5,38 @@
 #
 
 EXIT_SUCCESS=0
-EXIT_RUNTIME_ERROR=1
-EXIT_USAGE_ERROR=2
-EXIT_SERVER_DOWN=3
+EXIT_ERROR_RUNTIME=100
+EXIT_ERROR_USAGE=101
+EXIT_ERROR_SERVER_DOWN=102
+EXIT_ERROR_PACKAGE_JSON=103
 
 cmd="$@";
 
 function usage() {
   echo "usage: NPMSERVE_ORIGIN=<url> npmserve [ install | info | remove | cache clean ]";
-  exit $EXIT_USAGE_ERROR;
+  exit $EXIT_ERROR_USAGE;
 }
 
 function print_build_hash() {
-  build_hash=$(curl -s -X POST $NPMSERVE_ORIGIN/npm/hash -d packageJson="$(cat package.json)")
+  build_hash=$(
+    curl -s -X POST $NPMSERVE_ORIGIN/npm/hash \
+    --data-urlencode packageJson="$(cat package.json)"
+  )
   echo 'build hash:' $build_hash
 }
 
 function test_server_up() {
   curl -s -X GET $NPMSERVE_ORIGIN -o /dev/null || {
     echo "npmserve origin '$NPMSERVE_ORIGIN' is down or not available"
-    exit $EXIT_SERVER_DOWN
+    exit $EXIT_ERROR_SERVER_DOWN
   }
+}
+
+function test_package_json() {
+  if [ ! -e package.json ]; then
+    echo 'package.json does not exist. please re-run inside a node project.',
+    exit EXIT_ERROR_PACKAGE_JSON;
+  fi
 }
 
 function delete_node_modules() {
@@ -44,9 +55,10 @@ function npm_install() {
   print_build_hash
 
   echo 'requesting build from server (this may take a while) ...'
+
   curl -s -X POST $NPMSERVE_ORIGIN/npm/install \
     -H 'content-type: application/x-www-form-urlencoded; charset=utf-8' \
-    -d packageJson="$(cat package.json)" \
+    --data-urlencode packageJson="$(cat package.json)" \
     -o node_modules.tar.gz;
 
   echo 'testing file integrity'
@@ -54,7 +66,7 @@ function npm_install() {
     echo 'server encountered an error'
     echo $(cat node_modules.tar.gz)
     echo 'INSTALL FAILED'
-    exit $EXIT_RUNTIME_ERROR
+    exit $EXIT_ERROR_RUNTIME
   fi
 
   delete_node_modules
@@ -107,6 +119,14 @@ if [ -z "$NPMSERVE_ORIGIN" ]; then
   usage
 fi
 
+#
+# client-side validations
+#
+test_package_json
+
+#
+# server-side validations
+#
 test_server_up
 
 case "$cmd" in
