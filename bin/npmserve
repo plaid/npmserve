@@ -35,7 +35,7 @@ function test_server_up() {
 function test_package_json() {
   if [ ! -e package.json ]; then
     echo 'package.json does not exist. please re-run inside a node project.',
-    exit EXIT_ERROR_PACKAGE_JSON;
+    exit $EXIT_ERROR_PACKAGE_JSON;
   fi
 }
 
